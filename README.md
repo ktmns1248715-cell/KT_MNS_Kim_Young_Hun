@@ -1,7 +1,7 @@
 <html lang="ko">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-color-scheme: light">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>법인회선 재약정 견적서</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
@@ -35,7 +35,7 @@
         .invoice-container {
             width: 794px; 
             background-color: #ffffff;
-            padding: 15px 30px 20px 30px; /* 상하단 패딩을 컴팩트하게 조율 */
+            padding: 15px 30px 20px 30px; 
             box-shadow: 0 4px 20px rgba(0,0,0,0.08);
             box-sizing: border-box;
             image-rendering: -webkit-optimize-contrast;
@@ -74,13 +74,13 @@
             border-collapse: collapse;
             font-size: 11px; 
             color: #000000 !important; 
-            margin-bottom: 8px; /* 표 간격을 밀착시켜 하단 밀림 방지 */
+            margin-bottom: 8px; 
             table-layout: fixed;
         }
         th, td {
             border: 1px solid #a0a0a0 !important; 
             padding: 4px 6px; 
-            height: 24px; /* 행 높이를 최적화하여 슬림하게 피팅 */
+            height: 24px; 
             color: #000000 !important;
             vertical-align: middle !important;
             text-align: center !important; 
@@ -95,6 +95,7 @@
             text-align: center !important;
         }
 
+        /* [수정] 이메일 주소 공간을 넓히기 위해 기본 th/td 가로폭 비율 최적화 조정 */
         .info-table th { width: 14%; }
         .info-table td { width: 36%; }
 
@@ -115,6 +116,12 @@
             outline: none;
             text-align: center !important;
             box-shadow: none !important;
+        }
+
+        /* [수정] 긴 이메일 주소가 들어와도 잘리지 않도록 미세 자간 수축 설정 */
+        #manager-email {
+            letter-spacing: -0.3px !important;
+            padding: 0 2px !important;
         }
 
         input[type="date"] {
@@ -565,7 +572,6 @@
             });
         }
 
-        // [최종 디버깅] A4 도화지 스케일링 연산 정교화 공정 (하단 유의사항 잘림 버그 완벽 제어)
         function downloadInvoicePDF() {
             const { jsPDF } = window.jspdf;
             const captureArea = document.getElementById('invoice-capture-area');
@@ -582,24 +588,22 @@
                 const imgData = canvas.toDataURL('image/jpeg', 1.0);
                 
                 const pdf = new jsPDF('p', 'mm', 'a4');
-                const pageWidth = pdf.internal.pageSize.getWidth();   // 210mm
-                const pageHeight = pdf.internal.pageSize.getHeight(); // 297mm
+                const pageWidth = pdf.internal.pageSize.getWidth();   
+                const pageHeight = pdf.internal.pageSize.getHeight(); 
                 
                 const imgWidth = pageWidth;
                 const imgHeight = (canvas.height * imgWidth) / canvas.width;
                 
-                // [핵심 교정] 연산된 이미지 높이가 A4 규격을 아주 살짝 초과할 경우 배율을 압축 다운시킵니다.
                 let finalWidth = imgWidth;
                 let finalHeight = imgHeight;
                 let offsetX = 0;
                 let offsetY = 0;
 
                 if (imgHeight > pageHeight) {
-                    // 세로 비율에 강제 피팅시켜 하단 유의사항 테두리가 100% 안착하도록 조율합니다.
-                    finalHeight = pageHeight - 4; // 상하 미세 마진 공간 4mm 확보
+                    finalHeight = pageHeight - 4; 
                     finalWidth = (canvas.width * finalHeight) / canvas.height;
-                    offsetX = (pageWidth - finalWidth) / 2; // 수평 정중앙 미세 정렬
-                    offsetY = 2; // 상단 오프셋 고정
+                    offsetX = (pageWidth - finalWidth) / 2; 
+                    offsetY = 2; 
                 }
                 
                 pdf.addImage(imgData, 'JPEG', offsetX, offsetY, finalWidth, finalHeight, undefined, 'FAST');
