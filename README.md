@@ -3,6 +3,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>법인회선 재약정 견적서</title>
+    <!-- 고해상도 그래픽 캡처 및 PDF 출력을 위한 표준 라이브러리 로드 -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <style>
@@ -31,7 +32,6 @@
             input[type="text"], select { background-color: #f8fafc !important; color: #000000 !important; }
         }
 
-        /* [A4 한장 절대 수용] 하단 잘림을 완벽히 잡기 위해 상하 패딩과 테이블 간격을 미세 압축 */
         .invoice-container {
             width: 794px; 
             background-color: #ffffff;
@@ -80,7 +80,7 @@
         th, td {
             border: 1px solid #a0a0a0 !important; 
             padding: 4px 6px; 
-            height: 24px; 
+            height: 26px; /* 행 높이를 26px로 넉넉하게 교정하여 글자 잘림 방지 */
             color: #000000 !important;
             vertical-align: middle !important;
             text-align: center !important; 
@@ -95,10 +95,10 @@
             text-align: center !important;
         }
 
-        /* [수정] 이메일 주소 공간을 넓히기 위해 기본 th/td 가로폭 비율 최적화 조정 */
         .info-table th { width: 14%; }
         .info-table td { width: 36%; }
 
+        /* 일반 입력창 및 선택창 기본 스타일 */
         input[type="text"], input[type="date"], select {
             width: 100%;
             height: 100%;
@@ -118,10 +118,17 @@
             box-shadow: none !important;
         }
 
-        /* [수정] 긴 이메일 주소가 들어와도 잘리지 않도록 미세 자간 수축 설정 */
-        #manager-email {
-            letter-spacing: -0.3px !important;
-            padding: 0 2px !important;
+        /* [핵심 교정] 이메일, 연락처, 날짜 등 자동 입력용 전용 텍스트 컨테이너 스타일 (찌그러짐 완전 소멸) */
+        .text-display-cell {
+            width: 100%;
+            height: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 11px;
+            font-weight: 700;
+            box-sizing: border-box;
+            background-color: #f1f5f9 !important;
         }
 
         input[type="date"] {
@@ -147,8 +154,6 @@
         
         .blue-readonly {
             color: #004b8d !important;
-            -webkit-text-fill-color: #004b8d !important;
-            font-weight: 700 !important;
         }
 
         .benefit-highlight {
@@ -235,12 +240,16 @@
             box-shadow: none !important;
             border: none !important;
         }
+        .clean-capture .text-display-cell {
+            background-color: transparent !important;
+        }
 
         @media print {
             body { background: none; padding: 0; margin: 0; }
             .btn-area { display: none; } 
             .invoice-container { box-shadow: none; padding: 20px 30px; width: 100%; }
             input, select { background-color: transparent !important; }
+            .text-display-cell { background-color: transparent !important; }
         }
     </style>
 </head>
@@ -249,47 +258,50 @@
     <div class="responsive-wrapper">
         <div class="invoice-container" id="invoice-capture-area">
             
+            <!-- 상단 헤더 -->
             <div class="invoice-header">
                 <div class="logo-area">kt</div>
                 <div class="title-area">법인회선 재약정 견적서</div>
             </div>
 
+            <!-- 기본 정보 테이블 -->
             <table class="info-table">
                 <tr>
                     <th>견적일자</th>
-                    <td><input type="text" id="invoice-date" class="blue-readonly" readonly></td>
+                    <!-- [교정] input을 div 순수 텍스트 래핑 구조로 대체 -->
+                    <td><div id="invoice-date" class="text-display-cell blue-readonly"></div></td>
                     <th>사업자번호</th>
-                    <td><input type="text" value="120-87-09780" readonly></td>
+                    <td><div class="text-display-cell">120-87-09780</div></td>
                 </tr>
                 <tr>
                     <th>업체명</th>
                     <td><input type="text" value=" 귀하" id="client-name" onfocus="clearGuidance(this)" onblur="restoreGuidance(this)"></td>
                     <th>회사명</th>
-                    <td><input type="text" value="(주) KT M&S" readonly></td>
+                    <td><div class="text-display-cell">(주) KT M&S</div></td>
                 </tr>
                 <tr>
                     <th>사업자번호</th>
                     <td><input type="text" value="" placeholder="고객 사업자번호 입력"></td>
                     <th>대표자명</th>
-                    <td><input type="text" value="박성열" readonly></td>
+                    <td><div class="text-display-cell">박성열</div></td>
                 </tr>
                 <tr>
                     <th>총 제공되는 혜택</th>
                     <td class="benefit-highlight" id="total-benefits-display">₩0</td>
                     <th>주소</th>
-                    <td><input type="text" value="경기도 성남시 분당구 불정로 90(정자동)" readonly></td>
+                    <td><div class="text-display-cell" style="font-size:10px;">경기도 성남시 분당구 불정로 90(정자동)</div></td>
                 </tr>
                 <tr>
                     <th>수수료</th>
                     <td><input type="text" id="fee-input" value="0" oninput="runBenefitCalculations(this)"></td>
                     <th>업종</th>
-                    <td><input type="text" value="정보통신업" readonly></td>
+                    <td><div class="text-display-cell">정보통신업</div></td>
                 </tr>
                 <tr>
                     <th>통합사은품</th>
                     <td><input type="text" id="gift-input" value="0" oninput="runBenefitCalculations(this)"></td>
                     <th>담당부서</th>
-                    <td><input type="text" value="KT M&S 동부본부 동부법인지사" readonly></td>
+                    <td><div class="text-display-cell">KT M&S 동부본부 동부법인지사</div></td>
                 </tr>
                 <tr>
                     <th rowspan="2">재약정<br>구비서류</th>
@@ -312,7 +324,8 @@
                 </tr>
                 <tr>
                     <th>연락처</th>
-                    <td><input type="text" id="manager-phone" class="blue-readonly" readonly placeholder="자동 입력"></td>
+                    <!-- [교정] 찌그러짐을 유발하던 input을 완벽한 div 구조로 변경하여 폰트 선명도 보장 -->
+                    <td><div id="manager-phone" class="text-display-cell blue-readonly">자동 입력</div></td>
                 </tr>
                 <tr>
                     <th style="user-select: none;">견적유효기간</th>
@@ -320,10 +333,12 @@
                         견적서 제출일로부터 30일 이내
                     </td>
                     <th>이메일주소</th>
-                    <td><input type="text" id="manager-email" class="blue-readonly" readonly placeholder="자동 입력"></td>
+                    <!-- [교정] 알파벳 'o', 'm' 깨짐을 원천 복구하기 위해 div 텍스트 렌더링 적용 -->
+                    <td><div id="manager-email" class="text-display-cell blue-readonly" style="font-size:11px;">자동 입력</div></td>
                 </tr>
             </table>
 
+            <!-- 가입 상품 상세 테이블 (15개 행) -->
             <table class="product-table" id="product-list-table">
                 <thead>
                     <tr>
@@ -397,6 +412,7 @@
                         <td><input type="text"></td><td><input type="text"></td><td><input type="date" onchange="checkDateValue(this)"></td><td><input type="text"></td>
                         <td><input type="text" class="calc-charge" oninput="runCalculations(this)"></td><td><input type="text" class="calc-renew" oninput="runCalculations(this)"></td><td><input type="text" class="calc-diff" readonly placeholder="-"></td>
                     </tr>
+                    <!-- 최종 합계 행 -->
                     <tr class="total-row">
                         <td colspan="4" class="text-center">최종합계</td>
                         <td id="total-charge">0</td>
@@ -406,6 +422,7 @@
                 </tbody>
             </table>
 
+            <!-- 필수 안내 -->
             <table style="user-select: none;">
                 <tr>
                     <th style="width:15%; color: #d91414 !important; background-color: #fef2f2 !important;">필수 안내</th>
@@ -417,6 +434,7 @@
                 </tr>
             </table>
 
+            <!-- 유의 사항 -->
             <table style="user-select: none;">
                 <tr>
                     <th style="width:15%;">유의 사항</th>
@@ -430,6 +448,7 @@
 
         </div>
 
+        <!-- 다운로드 버튼 영역 -->
         <div class="btn-area">
             <button class="download-btn" onclick="downloadInvoiceJPG()">견적서 JPG 다운로드</button>
             <button class="download-btn pdf-btn" onclick="downloadInvoicePDF()">견적서 PDF 다운로드</button>
@@ -449,7 +468,7 @@
             const yyyy = today.getFullYear();
             const mm = String(today.getMonth() + 1).padStart(2, '0');
             const dd = String(today.getDate()).padStart(2, '0');
-            document.getElementById('invoice-date').value = `${yyyy}-${mm}-${dd}`;
+            document.getElementById('invoice-date').innerText = `${yyyy}-${mm}-${dd}`;
         }
 
         function clearGuidance(el) {
@@ -463,13 +482,14 @@
             }
         }
 
+        // [수정] value 대입 방식 대신 innerText 노출 방식으로 스크립트 전환
         function updateManagerInfo() {
             const select = document.getElementById('manager-select');
             const selectedOption = select.options[select.selectedIndex];
-            const phone = selectedOption.getAttribute('data-phone') || '';
-            const email = selectedOption.getAttribute('data-email') || '';
-            document.getElementById('manager-phone').value = phone;
-            document.getElementById('manager-email').value = email;
+            const phone = selectedOption.getAttribute('data-phone') || '자동 입력';
+            const email = selectedOption.getAttribute('data-email') || '자동 입력';
+            document.getElementById('manager-phone').innerText = phone;
+            document.getElementById('manager-email').innerText = email;
         }
 
         function checkDateValue(el) {
