@@ -3,7 +3,6 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>법인회선 재약정 견적서</title>
-    <!-- 고해상도 그래픽 캡처 및 PDF 출력을 위한 표준 라이브러리 로드 -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <style>
@@ -15,11 +14,12 @@
         body {
             font-family: -apple-system, BlinkMacSystemFont, "Apple SD Gothic Neo", "Pretendard Variable", Pretendard, "Malgun Gothic", "맑은 고딕", sans-serif;
             background-color: #f4f6f9;
-            padding: 10px 0; 
+            padding: 20px 0; 
             margin: 0;
             display: flex;
             flex-direction: column;
             align-items: center;
+            justify-content: center;
             -webkit-font-smoothing: antialiased;
         }
 
@@ -35,19 +35,20 @@
         .invoice-container {
             width: 794px; 
             background-color: #ffffff;
-            padding: 15px 30px 20px 30px; 
+            padding: 30px 40px; 
             box-shadow: 0 4px 20px rgba(0,0,0,0.08);
             box-sizing: border-box;
             image-rendering: -webkit-optimize-contrast;
+            margin: 0 auto; 
         }
 
         .invoice-header {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            margin-bottom: 12px; 
+            margin-bottom: 15px; 
             border-bottom: 3px solid #1c5280;
-            padding-bottom: 5px;
+            padding-bottom: 6px;
         }
         
         .logo-area {
@@ -74,16 +75,17 @@
             border-collapse: collapse;
             font-size: 11px; 
             color: #000000 !important; 
-            margin-bottom: 8px; 
+            margin-bottom: 10px; 
             table-layout: fixed;
         }
         th, td {
             border: 1px solid #a0a0a0 !important; 
             padding: 4px 6px; 
-            height: 26px; /* 행 높이를 26px로 넉넉하게 교정하여 글자 잘림 방지 */
+            height: 26px; 
             color: #000000 !important;
             vertical-align: middle !important;
             text-align: center !important; 
+            box-sizing: border-box;
             overflow: hidden;
             white-space: nowrap;
         }
@@ -92,13 +94,11 @@
             background-color: #f1f5f9 !important;
             font-weight: 700 !important;
             color: #000000 !important;
-            text-align: center !important;
         }
 
         .info-table th { width: 14%; }
         .info-table td { width: 36%; }
 
-        /* 일반 입력창 및 선택창 기본 스타일 */
         input[type="text"], input[type="date"], select {
             width: 100%;
             height: 100%;
@@ -118,17 +118,15 @@
             box-shadow: none !important;
         }
 
-        /* [핵심 교정] 이메일, 연락처, 날짜 등 자동 입력용 전용 텍스트 컨테이너 스타일 (찌그러짐 완전 소멸) */
-        .text-display-cell {
+        /* 캡처 시 대입될 텍스트 임시 뷰어 전용 폰트 유지 속성 */
+        .capture-text-node {
+            font-size: 11px !important;
+            font-weight: 600 !important;
+            color: #000000 !important;
+            text-align: center !important;
             width: 100%;
-            height: 100%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 11px;
-            font-weight: 700;
-            box-sizing: border-box;
-            background-color: #f1f5f9 !important;
+            display: block;
+            line-height: 26px;
         }
 
         input[type="date"] {
@@ -162,7 +160,6 @@
             font-weight: 800;
             text-align: center !important; 
             background-color: #fef2f2 !important;
-            white-space: nowrap !important;
             letter-spacing: 0.5px;
         }
 
@@ -171,17 +168,11 @@
             color: #000000 !important;
             font-weight: 700;
             font-size: 11px;
-            white-space: nowrap; 
         }
 
         .total-row {
             background-color: #e2e8f0 !important;
             font-weight: 700;
-        }
-        .total-row td {
-            font-size: 11px;
-            color: #000000 !important;
-            text-align: center !important; 
         }
 
         .notice-text {
@@ -232,24 +223,6 @@
             display: flex;
             flex-direction: column;
             align-items: center;
-            -webkit-overflow-scrolling: touch;
-        }
-
-        .clean-capture input, .clean-capture select {
-            background-color: transparent !important;
-            box-shadow: none !important;
-            border: none !important;
-        }
-        .clean-capture .text-display-cell {
-            background-color: transparent !important;
-        }
-
-        @media print {
-            body { background: none; padding: 0; margin: 0; }
-            .btn-area { display: none; } 
-            .invoice-container { box-shadow: none; padding: 20px 30px; width: 100%; }
-            input, select { background-color: transparent !important; }
-            .text-display-cell { background-color: transparent !important; }
         }
     </style>
 </head>
@@ -258,50 +231,47 @@
     <div class="responsive-wrapper">
         <div class="invoice-container" id="invoice-capture-area">
             
-            <!-- 상단 헤더 -->
             <div class="invoice-header">
                 <div class="logo-area">kt</div>
                 <div class="title-area">법인회선 재약정 견적서</div>
             </div>
 
-            <!-- 기본 정보 테이블 -->
             <table class="info-table">
                 <tr>
                     <th>견적일자</th>
-                    <!-- [교정] input을 div 순수 텍스트 래핑 구조로 대체 -->
-                    <td><div id="invoice-date" class="text-display-cell blue-readonly"></div></td>
+                    <td><input type="text" id="invoice-date" class="blue-readonly" readonly></td>
                     <th>사업자번호</th>
-                    <td><div class="text-display-cell">120-87-09780</div></td>
+                    <td><input type="text" value="120-87-09780" readonly></td>
                 </tr>
                 <tr>
                     <th>업체명</th>
                     <td><input type="text" value=" 귀하" id="client-name" onfocus="clearGuidance(this)" onblur="restoreGuidance(this)"></td>
                     <th>회사명</th>
-                    <td><div class="text-display-cell">(주) KT M&S</div></td>
+                    <td><input type="text" value="(주) KT M&S" readonly></td>
                 </tr>
                 <tr>
                     <th>사업자번호</th>
                     <td><input type="text" value="" placeholder="고객 사업자번호 입력"></td>
                     <th>대표자명</th>
-                    <td><div class="text-display-cell">박성열</div></td>
+                    <td><input type="text" value="박성열" readonly></td>
                 </tr>
                 <tr>
                     <th>총 제공되는 혜택</th>
                     <td class="benefit-highlight" id="total-benefits-display">₩0</td>
                     <th>주소</th>
-                    <td><div class="text-display-cell" style="font-size:10px;">경기도 성남시 분당구 불정로 90(정자동)</div></td>
+                    <td><input type="text" value="경기도 성남시 분당구 불정로 90(정자동)" readonly></td>
                 </tr>
                 <tr>
                     <th>수수료</th>
                     <td><input type="text" id="fee-input" value="0" oninput="runBenefitCalculations(this)"></td>
                     <th>업종</th>
-                    <td><div class="text-display-cell">정보통신업</div></td>
+                    <td><input type="text" value="정보통신업" readonly></td>
                 </tr>
                 <tr>
                     <th>통합사은품</th>
                     <td><input type="text" id="gift-input" value="0" oninput="runBenefitCalculations(this)"></td>
                     <th>담당부서</th>
-                    <td><div class="text-display-cell">KT M&S 동부본부 동부법인지사</div></td>
+                    <td><input type="text" value="KT M&S 동부본부 동부법인지사" readonly></td>
                 </tr>
                 <tr>
                     <th rowspan="2">재약정<br>구비서류</th>
@@ -319,13 +289,13 @@
                             <option value="장준성 과장" data-phone="010-6284-7934" data-email="1248733@ktmns.com">장준성 과장</option>
                             <option value="조창근 센터장" data-phone="010-2220-8900" data-email="jojocg@ktmns.com">조창근 센터장</option>
                             <option value="강수정 과장" data-phone="010-2860-8889" data-email="klklkil@ktmns.com">강수정 과장</option>
+                            <option value="유성엽 대리" data-phone="010-9959-1657" data-email="1268183@ktmns.com">유성엽 대리</option>
                         </select>
                     </td>
                 </tr>
                 <tr>
                     <th>연락처</th>
-                    <!-- [교정] 찌그러짐을 유발하던 input을 완벽한 div 구조로 변경하여 폰트 선명도 보장 -->
-                    <td><div id="manager-phone" class="text-display-cell blue-readonly">자동 입력</div></td>
+                    <td><input type="text" id="manager-phone" class="blue-readonly" readonly placeholder="자동 입력"></td>
                 </tr>
                 <tr>
                     <th style="user-select: none;">견적유효기간</th>
@@ -333,12 +303,10 @@
                         견적서 제출일로부터 30일 이내
                     </td>
                     <th>이메일주소</th>
-                    <!-- [교정] 알파벳 'o', 'm' 깨짐을 원천 복구하기 위해 div 텍스트 렌더링 적용 -->
-                    <td><div id="manager-email" class="text-display-cell blue-readonly" style="font-size:11px;">자동 입력</div></td>
+                    <td><input type="text" id="manager-email" class="blue-readonly" readonly placeholder="자동 입력"></td>
                 </tr>
             </table>
 
-            <!-- 가입 상품 상세 테이블 (15개 행) -->
             <table class="product-table" id="product-list-table">
                 <thead>
                     <tr>
@@ -412,7 +380,6 @@
                         <td><input type="text"></td><td><input type="text"></td><td><input type="date" onchange="checkDateValue(this)"></td><td><input type="text"></td>
                         <td><input type="text" class="calc-charge" oninput="runCalculations(this)"></td><td><input type="text" class="calc-renew" oninput="runCalculations(this)"></td><td><input type="text" class="calc-diff" readonly placeholder="-"></td>
                     </tr>
-                    <!-- 최종 합계 행 -->
                     <tr class="total-row">
                         <td colspan="4" class="text-center">최종합계</td>
                         <td id="total-charge">0</td>
@@ -422,7 +389,6 @@
                 </tbody>
             </table>
 
-            <!-- 필수 안내 -->
             <table style="user-select: none;">
                 <tr>
                     <th style="width:15%; color: #d91414 !important; background-color: #fef2f2 !important;">필수 안내</th>
@@ -434,7 +400,6 @@
                 </tr>
             </table>
 
-            <!-- 유의 사항 -->
             <table style="user-select: none;">
                 <tr>
                     <th style="width:15%;">유의 사항</th>
@@ -448,7 +413,6 @@
 
         </div>
 
-        <!-- 다운로드 버튼 영역 -->
         <div class="btn-area">
             <button class="download-btn" onclick="downloadInvoiceJPG()">견적서 JPG 다운로드</button>
             <button class="download-btn pdf-btn" onclick="downloadInvoicePDF()">견적서 PDF 다운로드</button>
@@ -468,7 +432,7 @@
             const yyyy = today.getFullYear();
             const mm = String(today.getMonth() + 1).padStart(2, '0');
             const dd = String(today.getDate()).padStart(2, '0');
-            document.getElementById('invoice-date').innerText = `${yyyy}-${mm}-${dd}`;
+            document.getElementById('invoice-date').value = `${yyyy}-${mm}-${dd}`;
         }
 
         function clearGuidance(el) {
@@ -482,14 +446,13 @@
             }
         }
 
-        // [수정] value 대입 방식 대신 innerText 노출 방식으로 스크립트 전환
         function updateManagerInfo() {
             const select = document.getElementById('manager-select');
             const selectedOption = select.options[select.selectedIndex];
-            const phone = selectedOption.getAttribute('data-phone') || '자동 입력';
-            const email = selectedOption.getAttribute('data-email') || '자동 입력';
-            document.getElementById('manager-phone').innerText = phone;
-            document.getElementById('manager-email').innerText = email;
+            const phone = selectedOption.getAttribute('data-phone') || '';
+            const email = selectedOption.getAttribute('data-email') || '';
+            document.getElementById('manager-phone').value = phone;
+            document.getElementById('manager-email').value = email;
         }
 
         function checkDateValue(el) {
@@ -566,11 +529,49 @@
             }
         }
 
+        /* [완벽 디버깅 시스템 구축] 
+           캡처 대상 내부의 input/select 태그를 순수 텍스트 노드로 실시간 스와프(Swap)하여 
+           글자 찌그러짐을 100% 원천 차단하는 알고리즘 엔진 적용
+        */
+        function prepareCleanCapture(container) {
+            const inputs = container.querySelectorAll('input, select');
+            inputs.forEach(input => {
+                let text = '';
+                if (input.tagName === 'SELECT') {
+                    text = input.options[input.selectedIndex].text;
+                    if (text.includes('-- 담당자 선택 --')) text = ' ';
+                } else if (input.type === 'date') {
+                    text = input.value || ' ';
+                } else {
+                    text = input.value || input.placeholder || ' ';
+                }
+
+                const textNode = document.createElement('span');
+                textNode.className = 'capture-text-node';
+                textNode.innerText = text;
+                
+                // 임시 출력을 위해 기존 input 숨기고 뒤에 붙임
+                input.style.setProperty('display', 'none', 'important');
+                input.parentNode.appendChild(textNode);
+            });
+        }
+
+        function restoreLiveCapture(container) {
+            const textNodes = container.querySelectorAll('.capture-text-node');
+            textNodes.forEach(node => node.remove());
+
+            const inputs = container.querySelectorAll('input, select');
+            inputs.forEach(input => {
+                input.style.removeProperty('display');
+            });
+        }
+
         function downloadInvoiceJPG() {
             const captureArea = document.getElementById('invoice-capture-area');
             if (document.activeElement) { document.activeElement.blur(); }
 
-            captureArea.classList.add('clean-capture');
+            // 1. 캡처 전용 순수 텍스트 변환 엔진 가동
+            prepareCleanCapture(captureArea);
 
             html2canvas(captureArea, {
                 scale: 3,                 
@@ -584,11 +585,12 @@
                 link.href = imageData;
                 link.download = '법인회선_재약정_견적서.jpg';
                 link.click();
-                captureArea.classList.remove('clean-capture');
+                
+                // 2. 변환 후 원상복구
+                restoreLiveCapture(captureArea);
             }).catch(error => {
                 console.error('오류 발생:', error);
-                alert('이미지 저장 중 오류가 발생했습니다.');
-                captureArea.classList.remove('clean-capture');
+                restoreLiveCapture(captureArea);
             });
         }
 
@@ -597,7 +599,8 @@
             const captureArea = document.getElementById('invoice-capture-area');
             if (document.activeElement) { document.activeElement.blur(); }
 
-            captureArea.classList.add('clean-capture');
+            // 1. 캡처 전용 순수 텍스트 변환 엔진 가동
+            prepareCleanCapture(captureArea);
 
             html2canvas(captureArea, {
                 scale: 3,
@@ -620,20 +623,21 @@
                 let offsetY = 0;
 
                 if (imgHeight > pageHeight) {
-                    finalHeight = pageHeight - 4; 
+                    finalHeight = pageHeight - 6; 
                     finalWidth = (canvas.width * finalHeight) / canvas.height;
                     offsetX = (pageWidth - finalWidth) / 2; 
-                    offsetY = 2; 
+                    offsetY = 3; 
                 }
                 
                 pdf.addImage(imgData, 'JPEG', offsetX, offsetY, finalWidth, finalHeight, undefined, 'FAST');
                 pdf.save('법인회선_재약정_견적서.pdf');
                 
-                captureArea.classList.remove('clean-capture');
+                // 2. 변환 후 원상복구
+                restoreLiveCapture(captureArea);
             }).catch(error => {
                 console.error('PDF 변환 중 치명적 오류:', error);
+                restoreLiveCapture(captureArea);
                 alert('PDF 파일 생성 중 문제가 발생했습니다.');
-                captureArea.classList.remove('clean-capture');
             });
         }
     </script>
