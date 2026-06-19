@@ -3,6 +3,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>법인회선 재약정 견적서</title>
+    <!-- 고해상도 그래픽 캡처 및 PDF 출력을 위한 표준 라이브러리 로드 -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <style>
@@ -77,6 +78,7 @@
             color: #000000 !important; 
             margin-bottom: 10px; 
             table-layout: fixed;
+            box-sizing: border-box;
         }
         th, td {
             border: 1px solid #a0a0a0 !important; 
@@ -87,7 +89,6 @@
             text-align: center !important; 
             box-sizing: border-box;
             overflow: hidden;
-            white-space: nowrap;
         }
         
         th {
@@ -96,8 +97,20 @@
             color: #000000 !important;
         }
 
+        /* 기본 상단 기본 정보 테이블 비율 지정 */
         .info-table th { width: 14%; }
         .info-table td { width: 36%; }
+
+        /* [핵심 수정] 하단 필수안내 및 유의사항 전용 테이블 가로 폭 비율 분배 (줄바꿈 방지 최적화) */
+        .notice-container-table th { width: 11% !important; }
+        .notice-container-table td { width: 89% !important; }
+
+        .product-table th {
+            background-color: #f1f5f9 !important;
+            color: #000000 !important;
+            font-weight: 700;
+            font-size: 11px;
+        }
 
         input[type="text"], input[type="date"], select {
             width: 100%;
@@ -118,15 +131,18 @@
             box-shadow: none !important;
         }
 
-        /* 캡처 시 대입될 텍스트 임시 뷰어 전용 폰트 유지 속성 */
+        /* 복제형 프리렌더링 전용 폰트 속성 */
         .capture-text-node {
             font-size: 11px !important;
             font-weight: 600 !important;
             color: #000000 !important;
             text-align: center !important;
             width: 100%;
-            display: block;
-            line-height: 26px;
+            display: inline-block;
+            line-height: 1.4 !important; 
+            white-space: normal !important; 
+            word-break: break-all;
+            vertical-align: middle;
         }
 
         input[type="date"] {
@@ -163,23 +179,20 @@
             letter-spacing: 0.5px;
         }
 
-        .product-table th {
-            background-color: #f1f5f9 !important;
-            color: #000000 !important;
-            font-weight: 700;
-            font-size: 11px;
-        }
-
         .total-row {
             background-color: #e2e8f0 !important;
             font-weight: 700;
         }
 
+        /* 하단 서술형 문장 정돈 레이아웃 */
         .notice-text {
             font-size: 11px; 
             color: #222222 !important; 
-            line-height: 1.45; 
+            line-height: 1.5; 
             font-weight: 500;
+            text-align: left !important; 
+            white-space: normal !important;
+            overflow: visible !important;
         }
         .bg-alert {
             background-color: #fffbeb !important; 
@@ -231,11 +244,13 @@
     <div class="responsive-wrapper">
         <div class="invoice-container" id="invoice-capture-area">
             
+            <!-- 상단 헤더 -->
             <div class="invoice-header">
                 <div class="logo-area">kt</div>
                 <div class="title-area">법인회선 재약정 견적서</div>
             </div>
 
+            <!-- 기본 정보 테이블 -->
             <table class="info-table">
                 <tr>
                     <th>견적일자</th>
@@ -259,7 +274,7 @@
                     <th>총 제공되는 혜택</th>
                     <td class="benefit-highlight" id="total-benefits-display">₩0</td>
                     <th>주소</th>
-                    <td><input type="text" value="경기도 성남시 분당구 불정로 90(정자동)" readonly></td>
+                    <td><input type="text" value="경기도 성남시 분당구 불정로 90(KT본사타워)" readonly></td>
                 </tr>
                 <tr>
                     <th>수수료</th>
@@ -271,12 +286,12 @@
                     <th>통합사은품</th>
                     <td><input type="text" id="gift-input" value="0" oninput="runBenefitCalculations(this)"></td>
                     <th>담당부서</th>
-                    <td><input type="text" value="KT M&S 동부본부 동부법인지사" readonly></td>
+                    <td><input type="text" value="KT M&S 동부본부 대구법인지사" readonly></td>
                 </tr>
                 <tr>
                     <th rowspan="2">재약정<br>구비서류</th>
-                    <td rowspan="2" class="notice-text lock-cell" style="background-color: #fafafa; font-size: 10px; line-height: 1.45; user-select: none;">
-                        법인 대표자 신분증 / 명함<br>사업자 등록증 (사본가능)
+                    <td rowspan="2" class="notice-text lock-cell" style="background-color: #fafafa; font-size: 10px; line-height: 1.45; user-select: none; text-align: center !important;">
+                        <span class="capture-text-node" style="font-size: 10px !important;">법인 대표자 신분증 / 명함<br>사업자 등록증 (사본가능)</span>
                     </td>
                     <th>담당자</th>
                     <td>
@@ -299,14 +314,15 @@
                 </tr>
                 <tr>
                     <th style="user-select: none;">견적유효기간</th>
-                    <td class="notice-text lock-cell" style="background-color: #ffffff; font-weight: bold; color: #004b8d !important; user-select: none;">
-                        견적서 제출일로부터 30일 이내
+                    <td class="notice-text lock-cell" style="background-color: #ffffff; font-weight: bold; color: #004b8d !important; user-select: none; text-align: center !important;">
+                        <span class="capture-text-node" style="color: #004b8d !important; font-weight: bold !important;">견적서 제출일로부터 30일 이내</span>
                     </td>
                     <th>이메일주소</th>
                     <td><input type="text" id="manager-email" class="blue-readonly" readonly placeholder="자동 입력"></td>
                 </tr>
             </table>
 
+            <!-- 가입 상품 상세 테이블 (15개 행) -->
             <table class="product-table" id="product-list-table">
                 <thead>
                     <tr>
@@ -380,6 +396,7 @@
                         <td><input type="text"></td><td><input type="text"></td><td><input type="date" onchange="checkDateValue(this)"></td><td><input type="text"></td>
                         <td><input type="text" class="calc-charge" oninput="runCalculations(this)"></td><td><input type="text" class="calc-renew" oninput="runCalculations(this)"></td><td><input type="text" class="calc-diff" readonly placeholder="-"></td>
                     </tr>
+                    <!-- 최종 합계 행 -->
                     <tr class="total-row">
                         <td colspan="4" class="text-center">최종합계</td>
                         <td id="total-charge">0</td>
@@ -389,10 +406,11 @@
                 </tbody>
             </table>
 
-            <table style="user-select: none;">
+            <!-- 필수 안내 (너비 할당 클래스 동기화 매칭) -->
+            <table class="notice-container-table" style="user-select: none;">
                 <tr>
-                    <th style="width:15%; color: #d91414 !important; background-color: #fef2f2 !important;">필수 안내</th>
-                    <td class="notice-text bg-alert" style="text-align: left !important; padding: 10px; font-size: 11px; line-height: 1.5; font-weight: 700;">
+                    <th style="color: #d91414 !important; background-color: #fef2f2 !important; text-align: center !important;">필수 안내</th>
+                    <td class="notice-text bg-alert" style="padding: 10px; font-weight: 700;">
                         • 수수료 지급 : 재약정 완료 ➔ 익월 말 ➔ 법인 대표님 휴대폰으로 신세계 모바일 상품권 발송<br>
                         • 사은품 지급 : 재약정 완료 ➔ 1주 이내 ➔ 법인 대표님 휴대폰으로 신세계 모바일 상품권 발송<br>
                         • <span style="color:#d91414;">[지급 제한 조건]</span> 수수료 및 통합 사은품은 법인 대표님의 명함에 기재된 명확한 전화번호로만 전송이 가능합니다.
@@ -400,10 +418,11 @@
                 </tr>
             </table>
 
-            <table style="user-select: none;">
+            <!-- 유의 사항 (너비 할당 클래스 동기화 매칭) -->
+            <table class="notice-container-table" style="user-select: none;">
                 <tr>
-                    <th style="width:15%;">유의 사항</th>
-                    <td class="notice-text" style="vertical-align: middle; padding: 10px; background-color: #fafafa; text-align: left !important; font-size: 11px; line-height: 1.5; color: #555 !important;">
+                    <th style="text-align: center !important;">유의 사항</th>
+                    <td class="notice-text" style="padding: 10px; background-color: #fafafa; color: #555 !important;">
                         1. 상기 법인 회선 재약정 기준 KT 정식 약정 기간은 총 3년(36개월)이며, 기타 상세 세부사항은 KT 이용약관에 준합니다.<br>
                         2. 재약정 시점에 따라 일부 가입 상품(기업용 TV 등)의 (구)요금제가  (신)요금제로 변경될 수 있습니다.<br>
                         3. 현장 설비 이상 및 장애 발생 시 즉시 KT 고객센터(국번없이 100번)를 통해 접수하시거나 담당부서로 상담 바랍니다.
@@ -413,9 +432,10 @@
 
         </div>
 
+        <!-- 다운로드 버튼 영역 -->
         <div class="btn-area">
-            <button class="download-btn" onclick="downloadInvoiceJPG()">견적서 JPG 다운로드</button>
-            <button class="download-btn pdf-btn" onclick="downloadInvoicePDF()">견적서 PDF 다운로드</button>
+            <button class="download-btn" onclick="generateInvoiceImage('jpg')">견적서 JPG 다운로드</button>
+            <button class="download-btn pdf-btn" onclick="generateInvoiceImage('pdf')">견적서 PDF 다운로드</button>
         </div>
     </div>
 
@@ -529,51 +549,45 @@
             }
         }
 
-        /* [완벽 디버깅 시스템 구축] 
-           캡처 대상 내부의 input/select 태그를 순수 텍스트 노드로 실시간 스와프(Swap)하여 
-           글자 찌그러짐을 100% 원천 차단하는 알고리즘 엔진 적용
-        */
-        function prepareCleanCapture(container) {
-            const inputs = container.querySelectorAll('input, select');
-            inputs.forEach(input => {
+        function generateInvoiceImage(format) {
+            const originArea = document.getElementById('invoice-capture-area');
+            if (document.activeElement) { document.activeElement.blur(); }
+
+            const cloneArea = originArea.cloneNode(true);
+            cloneArea.style.position = 'fixed';
+            cloneArea.style.top = '-9999px';
+            cloneArea.style.left = '-9999px';
+            document.body.appendChild(cloneArea);
+
+            const originInputs = originArea.querySelectorAll('input, select');
+            const cloneInputs = cloneArea.querySelectorAll('input, select');
+
+            originInputs.forEach((originInput, idx) => {
+                const cloneInput = cloneInputs[idx];
                 let text = '';
-                if (input.tagName === 'SELECT') {
-                    text = input.options[input.selectedIndex].text;
+                
+                if (originInput.tagName === 'SELECT') {
+                    text = originInput.options[originInput.selectedIndex].text;
                     if (text.includes('-- 담당자 선택 --')) text = ' ';
-                } else if (input.type === 'date') {
-                    text = input.value || ' ';
+                } else if (originInput.type === 'date') {
+                    text = originInput.value || ' ';
                 } else {
-                    text = input.value || input.placeholder || ' ';
+                    text = originInput.value || originInput.placeholder || ' ';
                 }
 
                 const textNode = document.createElement('span');
                 textNode.className = 'capture-text-node';
-                textNode.innerText = text;
                 
-                // 임시 출력을 위해 기존 input 숨기고 뒤에 붙임
-                input.style.setProperty('display', 'none', 'important');
-                input.parentNode.appendChild(textNode);
+                if(originInput.classList.contains('blue-readonly')) {
+                    textNode.style.color = '#004b8d';
+                    textNode.style.fontWeight = 'bold';
+                }
+
+                textNode.innerText = text;
+                cloneInput.parentNode.replaceChild(textNode, cloneInput);
             });
-        }
 
-        function restoreLiveCapture(container) {
-            const textNodes = container.querySelectorAll('.capture-text-node');
-            textNodes.forEach(node => node.remove());
-
-            const inputs = container.querySelectorAll('input, select');
-            inputs.forEach(input => {
-                input.style.removeProperty('display');
-            });
-        }
-
-        function downloadInvoiceJPG() {
-            const captureArea = document.getElementById('invoice-capture-area');
-            if (document.activeElement) { document.activeElement.blur(); }
-
-            // 1. 캡처 전용 순수 텍스트 변환 엔진 가동
-            prepareCleanCapture(captureArea);
-
-            html2canvas(captureArea, {
+            html2canvas(cloneArea, {
                 scale: 3,                 
                 useCORS: true,
                 backgroundColor: '#ffffff',
@@ -581,63 +595,43 @@
                 letterRendering: true     
             }).then(canvas => {
                 const imageData = canvas.toDataURL('image/jpeg', 1.0); 
-                const link = document.createElement('a');
-                link.href = imageData;
-                link.download = '법인회선_재약정_견적서.jpg';
-                link.click();
-                
-                // 2. 변환 후 원상복구
-                restoreLiveCapture(captureArea);
-            }).catch(error => {
-                console.error('오류 발생:', error);
-                restoreLiveCapture(captureArea);
-            });
-        }
 
-        function downloadInvoicePDF() {
-            const { jsPDF } = window.jspdf;
-            const captureArea = document.getElementById('invoice-capture-area');
-            if (document.activeElement) { document.activeElement.blur(); }
+                if (format === 'jpg') {
+                    const link = document.createElement('a');
+                    link.href = imageData;
+                    link.download = '법인회선_재약정_견적서.jpg';
+                    link.click();
+                } else if (format === 'pdf') {
+                    const { jsPDF } = window.jspdf;
+                    const pdf = new jsPDF('p', 'mm', 'a4');
+                    const pageWidth = pdf.internal.pageSize.getWidth();   
+                    const pageHeight = pdf.internal.pageSize.getHeight(); 
+                    
+                    const imgWidth = pageWidth;
+                    const imgHeight = (canvas.height * imgWidth) / canvas.width;
+                    
+                    let finalWidth = imgWidth;
+                    let finalHeight = imgHeight;
+                    let offsetX = 0;
+                    let offsetY = 0;
 
-            // 1. 캡처 전용 순수 텍스트 변환 엔진 가동
-            prepareCleanCapture(captureArea);
-
-            html2canvas(captureArea, {
-                scale: 3,
-                useCORS: true,
-                backgroundColor: '#ffffff',
-                letterRendering: true
-            }).then(canvas => {
-                const imgData = canvas.toDataURL('image/jpeg', 1.0);
-                
-                const pdf = new jsPDF('p', 'mm', 'a4');
-                const pageWidth = pdf.internal.pageSize.getWidth();   
-                const pageHeight = pdf.internal.pageSize.getHeight(); 
-                
-                const imgWidth = pageWidth;
-                const imgHeight = (canvas.height * imgWidth) / canvas.width;
-                
-                let finalWidth = imgWidth;
-                let finalHeight = imgHeight;
-                let offsetX = 0;
-                let offsetY = 0;
-
-                if (imgHeight > pageHeight) {
-                    finalHeight = pageHeight - 6; 
-                    finalWidth = (canvas.width * finalHeight) / canvas.height;
-                    offsetX = (pageWidth - finalWidth) / 2; 
-                    offsetY = 3; 
+                    if (imgHeight > pageHeight) {
+                        finalHeight = pageHeight - 6; 
+                        finalWidth = (canvas.width * finalHeight) / canvas.height;
+                        offsetX = (pageWidth - finalWidth) / 2; 
+                        offsetY = 3; 
+                    }
+                    
+                    pdf.addImage(imageData, 'JPEG', offsetX, offsetY, finalWidth, finalHeight, undefined, 'FAST');
+                    pdf.save('법인회선_재약정_견적서.pdf');
                 }
-                
-                pdf.addImage(imgData, 'JPEG', offsetX, offsetY, finalWidth, finalHeight, undefined, 'FAST');
-                pdf.save('법인회선_재약정_견적서.pdf');
-                
-                // 2. 변환 후 원상복구
-                restoreLiveCapture(captureArea);
+
+                document.body.removeChild(cloneArea);
             }).catch(error => {
-                console.error('PDF 변환 중 치명적 오류:', error);
-                restoreLiveCapture(captureArea);
-                alert('PDF 파일 생성 중 문제가 발생했습니다.');
+                console.error('다운로드 중 오류가 발생했습니다:', error);
+                if (document.body.contains(cloneArea)) {
+                    document.body.removeChild(cloneArea);
+                }
             });
         }
     </script>
