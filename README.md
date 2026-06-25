@@ -1,3 +1,4 @@
+<!DOCTYPE html>
 <html lang="ko">
 <head>
     <meta charset="UTF-8">
@@ -30,7 +31,7 @@
             .invoice-container { background-color: #ffffff !important; color: #000000 !important; }
             th { background-color: #f1f5f9 !important; color: #000000 !important; }
             td { background-color: #ffffff !important; color: #000000 !important; border-color: #a0a0a0 !important; }
-            input[type="text"], select { background-color: #f8fafc !important; color: #000000 !important; }
+            input[type="text"], select, textarea { background-color: #f8fafc !important; color: #000000 !important; }
         }
 
         .invoice-container {
@@ -101,7 +102,7 @@
         .info-table th { width: 14%; }
         .info-table td { width: 36%; }
 
-        /* [핵심 수정] 하단 필수안내 및 유의사항 전용 테이블 가로 폭 비율 분배 (줄바꿈 방지 최적화) */
+        /* 하단 필수안내, 유의사항, 메모란 전용 테이블 가로 폭 비율 분배 */
         .notice-container-table th { width: 11% !important; }
         .notice-container-table td { width: 89% !important; }
 
@@ -112,7 +113,7 @@
             font-size: 11px;
         }
 
-        input[type="text"], input[type="date"], select {
+        input[type="text"], input[type="date"], select, textarea {
             width: 100%;
             height: 100%;
             border: none !important;
@@ -129,6 +130,15 @@
             outline: none;
             text-align: center !important;
             box-shadow: none !important;
+        }
+
+        /* 메모란 편집창 스타일 설정 */
+        textarea {
+            text-align: left !important;
+            padding: 8px !important;
+            resize: none;
+            height: 70px;
+            line-height: 1.5;
         }
 
         /* 복제형 프리렌더링 전용 폰트 속성 */
@@ -154,7 +164,7 @@
             -webkit-text-fill-color: #000000 !important;
         }
         
-        input:focus, select:focus {
+        input:focus, select:focus, textarea:focus {
             background-color: #e0f2fe !important; 
         }
 
@@ -406,7 +416,7 @@
                 </tbody>
             </table>
 
-            <!-- 필수 안내 (너비 할당 클래스 동기화 매칭) -->
+            <!-- 필수 안내 -->
             <table class="notice-container-table" style="user-select: none;">
                 <tr>
                     <th style="color: #d91414 !important; background-color: #fef2f2 !important; text-align: center !important;">필수 안내</th>
@@ -418,7 +428,7 @@
                 </tr>
             </table>
 
-            <!-- 유의 사항 (너비 할당 클래스 동기화 매칭) -->
+            <!-- 유의 사항 -->
             <table class="notice-container-table" style="user-select: none;">
                 <tr>
                     <th style="text-align: center !important;">유의 사항</th>
@@ -426,6 +436,16 @@
                         1. 상기 법인 회선 재약정 기준 KT 정식 약정 기간은 총 3년(36개월)이며, 기타 상세 세부사항은 KT 이용약관에 준합니다.<br>
                         2. 재약정 시점에 따라 일부 가입 상품(기업용 TV 등)의 (구)요금제가  (신)요금제로 변경될 수 있습니다.<br>
                         3. 현장 설비 이상 및 장애 발생 시 즉시 KT 고객센터(국번없이 100번)를 통해 접수하시거나 담당부서로 상담 바랍니다.
+                    </td>
+                </tr>
+            </table>
+
+            <!-- [추가항목] 메모 / 비고 란 -->
+            <table class="notice-container-table">
+                <tr>
+                    <th style="text-align: center !important; background-color: #f1f5f9;">메모 사항</th>
+                    <td style="padding: 0; background-color: #f8fafc;">
+                        <textarea id="memo-input" placeholder="여기에 특이사항이나 추가 협의 내용을 입력하세요. (출력 시 줄바꿈이 그대로 유지됩니다)"></textarea>
                     </td>
                 </tr>
             </table>
@@ -559,8 +579,9 @@
             cloneArea.style.left = '-9999px';
             document.body.appendChild(cloneArea);
 
-            const originInputs = originArea.querySelectorAll('input, select');
-            const cloneInputs = cloneArea.querySelectorAll('input, select');
+            // INPUT, SELECT, TEXTAREA 엘리먼트 통합 수집하여 변환 처리
+            const originInputs = originArea.querySelectorAll('input, select, textarea');
+            const cloneInputs = cloneArea.querySelectorAll('input, select, textarea');
 
             originInputs.forEach((originInput, idx) => {
                 const cloneInput = cloneInputs[idx];
@@ -570,6 +591,8 @@
                     text = originInput.options[originInput.selectedIndex].text;
                     if (text.includes('-- 담당자 선택 --')) text = ' ';
                 } else if (originInput.type === 'date') {
+                    text = originInput.value || ' ';
+                } else if (originInput.tagName === 'TEXTAREA') {
                     text = originInput.value || ' ';
                 } else {
                     text = originInput.value || originInput.placeholder || ' ';
@@ -583,12 +606,20 @@
                     textNode.style.fontWeight = 'bold';
                 }
 
+                // 메모창 줄바꿈을 출력본에 유지하고, 왼쪽 정렬 속성 적용
+                if (originInput.tagName === 'TEXTAREA') {
+                    textNode.style.whiteSpace = 'pre-wrap';
+                    textNode.style.textAlign = 'left';
+                    textNode.style.padding = '8px';
+                    textNode.style.display = 'block';
+                }
+
                 textNode.innerText = text;
                 cloneInput.parentNode.replaceChild(textNode, cloneInput);
             });
 
             html2canvas(cloneArea, {
-                scale: 3,                 
+                scale: 3,                  
                 useCORS: true,
                 backgroundColor: '#ffffff',
                 logging: false,
